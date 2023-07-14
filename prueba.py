@@ -1,10 +1,5 @@
-#   https://chat.openai.com/share/757e1043-3849-4e76-a3c4-c8c0df7a2a5d
-
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow,  QTabWidget, QWidget, QVBoxLayout, QLabel, QPushButton
-from toolbar.Procesos import Procesos
-from toolbar.Detalles import Detalles
-from toolbar.Rendimiento import Rendimiento
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QTabWidget
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -12,38 +7,26 @@ class MyWindow(QMainWindow):
         self.initializeUI()
 
     def initializeUI(self):
-        self.setGeometry(200, 200, 400, 300)
-        self.setWindowTitle('cpu-monitor')
         tab_widget = QTabWidget(self)
+        text_edit1 = QTextEdit()
+        text_edit2 = QTextEdit()
 
-        self.screen1 = QWidget()
-        self.screen2 = QWidget()
-        self.screen3 = QWidget()
-
-        self.showScreen1()
-        self.showScreen2()
-        self.showScreen3()
-
-        tab_widget.addTab(self.screen1, 'Procesos')
-        tab_widget.addTab(self.screen2, 'Detalles')
-        tab_widget.addTab(self.screen3, 'Rendimiento')
+        tab_widget.addTab(text_edit1, 'Pestaña 1')
+        tab_widget.addTab(text_edit2, 'Pestaña 2')
 
         self.setCentralWidget(tab_widget)
 
+        # Agregar contador en la pestaña 2
+        
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.updateCounter)
+        self.timer.start(1000)  # Actualizar cada segundo
+
         self.show()
 
-    def showScreen1(self):
-        procesos = Procesos(self)
-        procesos.initScreen1()
-    
-    def showScreen2(self):
-        procesos = Detalles(self)
-        procesos.initScreen2()
-
-    def showScreen3(self):
-        procesos = Rendimiento(self)
-        procesos.initScreen3()
-
+    def updateCounter(self):
+        self.counter += 1
+        self.centralWidget().widget(1).setText(f'Contador: {self.counter}')
 
 if __name__ == '__main__':
     app = QApplication([])

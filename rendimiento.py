@@ -16,9 +16,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
 
         self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
-
-        self.layout = QVBoxLayout(self.central_widget)
+        
 
         self.cpu_chart_view = QChartView(self)
         self.cpu_chart = QChart()
