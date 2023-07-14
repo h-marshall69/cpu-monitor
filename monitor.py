@@ -1,5 +1,4 @@
 import psutil
-import platform
 from PyQt5.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QProgressBar
 from PyQt5.QtCore import QTimer
 
