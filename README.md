@@ -21,4 +21,6 @@ To deploy this project run
 ## Screenshots
 
 ![App Screenshot](https://github.com/h-marshall69/cpu-monitor/blob/main/assets/a.png)
+![App Screenshot](https://github.com/h-marshall69/cpu-monitor/blob/main/assets/b.png)
+![App Screenshot](https://github.com/h-marshall69/cpu-monitor/blob/main/assets/c.png)
 
