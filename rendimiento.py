@@ -1,5 +1,3 @@
-#   https://chat.openai.com/share/79cc4ec2-836b-4fb8-b08a-5350511776af
-
 import sys
 import psutil
 import time
@@ -7,7 +5,6 @@ import pywifi
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtChart import QChart, QChartView, QLineSeries
-from PyQt5.QtGui import QPainter
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -16,7 +13,8 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
 
         self.central_widget = QWidget(self)
-        
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
 
         self.cpu_chart_view = QChartView(self)
         self.cpu_chart = QChart()
@@ -31,6 +29,7 @@ class MainWindow(QMainWindow):
         self.cpu_chart_view.setChart(self.cpu_chart)
         self.layout.addWidget(self.cpu_chart_view)
 
+        # Atributos agregados para las otras gráficas
         self.memory_chart_view = QChartView(self)
         self.memory_chart = QChart()
         self.memory_series = QLineSeries()
@@ -71,7 +70,7 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.wifi_chart_view)
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_charts)
+        self.timer.timeout.connect(self.update)
         self.timer.start(1000)  # Actualizar cada segundo
 
     def get_wifi_signal_strength(self):
@@ -87,25 +86,35 @@ class MainWindow(QMainWindow):
                 return signal_strength
         return 0
 
-    def update_charts(self):
+    def update_cpu_chart(self):
         cpu_percent = psutil.cpu_percent(interval=None)
-        memory_percent = psutil.virtual_memory().percent
-        disk_percent = psutil.disk_usage('/').percent
-        wifi_strength = self.get_wifi_signal_strength()
-
         self.cpu_series.append(self.cpu_series.count(), cpu_percent)
-        self.memory_series.append(self.memory_series.count(), memory_percent)
-        self.disk_series.append(self.disk_series.count(), disk_percent)
-        self.wifi_series.append(self.wifi_series.count(), wifi_strength)
-
         if self.cpu_series.count() > 30:
             self.cpu_series.removePoints(0, 1)
+
+    def update_memory_chart(self):
+        memory_percent = psutil.virtual_memory().percent
+        self.memory_series.append(self.memory_series.count(), memory_percent)
         if self.memory_series.count() > 30:
             self.memory_series.removePoints(0, 1)
+
+    def update_disk_chart(self):
+        disk_percent = psutil.disk_usage('/').percent
+        self.disk_series.append(self.disk_series.count(), disk_percent)
         if self.disk_series.count() > 30:
             self.disk_series.removePoints(0, 1)
+
+    def update_wifi_chart(self):
+        wifi_strength = self.get_wifi_signal_strength()
+        self.wifi_series.append(self.wifi_series.count(), wifi_strength)
         if self.wifi_series.count() > 30:
             self.wifi_series.removePoints(0, 1)
+
+    def update(self):
+        self.update_cpu_chart()
+        self.update_memory_chart()
+        self.update_disk_chart()
+        self.update_wifi_chart()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

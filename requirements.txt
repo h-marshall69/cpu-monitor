@@ -3,3 +3,5 @@ PyQtChart
 psutil  
 pywifi
 comtypes
+py-cpuinfo
+wmi

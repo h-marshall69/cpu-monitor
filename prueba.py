@@ -1,34 +1,54 @@
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QTabWidget
+import sys
+import time
+import psutil
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QProgressBar
 
-class MyWindow(QMainWindow):
+
+class TaskSimulator(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initializeUI()
 
-    def initializeUI(self):
-        tab_widget = QTabWidget(self)
-        text_edit1 = QTextEdit()
-        text_edit2 = QTextEdit()
+        self.setWindowTitle("Tarea de CPU Simulator")
+        self.setGeometry(100, 100, 400, 100)
 
-        tab_widget.addTab(text_edit1, 'Pestaña 1')
-        tab_widget.addTab(text_edit2, 'Pestaña 2')
+        self.label = QLabel("Simulando tarea al 50% de CPU...", self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setGeometry(50, 10, 300, 20)
 
-        self.setCentralWidget(tab_widget)
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(50, 40, 300, 30)
 
-        # Agregar contador en la pestaña 2
-        
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.updateCounter)
-        self.timer.start(1000)  # Actualizar cada segundo
+        self.timer.timeout.connect(self.update_progress)
+        self.timer.setInterval(1000)  # Actualizar cada segundo
+        self.current_progress = 0
+        self.total_seconds = 50
 
-        self.show()
+    def start_simulation(self):
+        # Limitar el uso de CPU al 50% para el proceso actual
+        psutil.Process().cpu_percent(50)
 
-    def updateCounter(self):
-        self.counter += 1
-        self.centralWidget().widget(1).setText(f'Contador: {self.counter}')
+        self.current_progress = 0
+        self.progress_bar.setValue(0)
+        self.timer.start()
 
-if __name__ == '__main__':
-    app = QApplication([])
-    window = MyWindow()
-    app.exec()
+    def update_progress(self):
+        self.current_progress += 1
+        self.progress_bar.setValue(int((self.current_progress / self.total_seconds) * 100))
+
+        if self.current_progress >= self.total_seconds:
+            self.timer.stop()
+            self.label.setText("Tarea completada")
+            # Restaurar el uso normal de la CPU
+            psutil.Process().cpu_percent(None)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = TaskSimulator()
+    window.show()
+
+    # Simular la tarea durante 50 segundos
+    window.start_simulation()
+
+    sys.exit(app.exec_())

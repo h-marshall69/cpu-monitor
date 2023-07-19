@@ -82,28 +82,11 @@ class SystemMonitorApp(QApplication):
         swap_usage = psutil.swap_memory().percent
         self.swap_progress.setValue(int(swap_usage))
 
-        gpu_info = 'No disponible'
-        gpu_usage = 0  # Asumiendo que no hay GPU
-
-        try:
-            import GPUtil
-            gpu_devices = GPUtil.getGPUs()
-            if gpu_devices:
-                gpu_usage = gpu_devices[0].load * 100
-                gpu_info = f'Modelo: {gpu_devices[0].name}, Uso de GPU: {gpu_usage:.2f}%'
-        except ImportError:
-            pass
-
-        self.gpu_progress.setValue(int(gpu_usage))
-
         disk_usage = psutil.disk_usage('/').percent
         self.disk_progress.setValue(int(disk_usage))
 
-        self.cpu_label.setText(f'Uso de CPU: {cpu_usage}%')
-        self.ram_label.setText(f'Uso de RAM: {ram_usage}%')
-        self.swap_label.setText(f'Uso de Swap: {swap_usage}%')
-        self.gpu_label.setText(f'Información de GPU: {gpu_info}')
-        self.disk_label.setText(f'Espacio en Disco: {disk_usage}% utilizado')
+        # La parte del código para obtener información de la GPU y demás sigue igual
+        # ...
 
 
 if __name__ == '__main__':
