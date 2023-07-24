@@ -3,7 +3,7 @@ import psutil
 import time
 import random
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QTabWidget, QLabel, QLineEdit, QPushButton, QListWidget, QListWidgetItem, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QListWidget, QVBoxLayout, QWidget, QTabWidget, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem
 
 
 class ResourceMonitor:
@@ -148,9 +148,12 @@ class TaskManagerApp(QMainWindow):
     def view_tasks_ui(self, parent):
         layout = QVBoxLayout()
 
-        self.task_list = QListWidget()
-        self.task_list.itemClicked.connect(self.show_task_info)
-        layout.addWidget(self.task_list)
+        self.task_table = QTableWidget()
+        self.task_table.setColumnCount(9)  # Número de columnas en la tabla (9 atributos de la tarea)
+        self.task_table.setHorizontalHeaderLabels(
+            ["Task", "CPU Demand", "RAM Demand (GB)", "Disk Demand (GB)", "CPU Limit (%)", "RAM Limit (GB)", "Disk Limit (GB)", "Page Count", "Page Size (MB)"]
+        )
+        layout.addWidget(self.task_table)
 
         self.task_info_label = QLabel()
         self.task_info_label.setWordWrap(True)
@@ -161,6 +164,20 @@ class TaskManagerApp(QMainWindow):
         layout.addWidget(self.close_task_button)
 
         parent.setLayout(layout)
+
+    def update_task_table(self):
+        self.task_table.setRowCount(len(self.tasks))
+
+        for row, task in enumerate(self.tasks):
+            self.task_table.setItem(row, 0, QTableWidgetItem(task.name))
+            self.task_table.setItem(row, 1, QTableWidgetItem(f"{task.cpu_demand}%"))
+            self.task_table.setItem(row, 2, QTableWidgetItem(f"{task.ram_demand:.2f}"))
+            self.task_table.setItem(row, 3, QTableWidgetItem(f"{task.disk_demand:.2f}"))
+            self.task_table.setItem(row, 4, QTableWidgetItem(task.cpu_limit))
+            self.task_table.setItem(row, 5, QTableWidgetItem(f"{task.ram_limit:.2f}"))
+            self.task_table.setItem(row, 6, QTableWidgetItem(f"{task.disk_limit:.2f}"))
+            self.task_table.setItem(row, 7, QTableWidgetItem(str(task.page_count)))
+            self.task_table.setItem(row, 8, QTableWidgetItem(str(task.page_size)))
 
     def add_task(self):
         name = self.task_name_input.text()
@@ -176,7 +193,8 @@ class TaskManagerApp(QMainWindow):
         task = Task(name, cpu_demand, ram_demand, disk_demand, cpu_limit, ram_limit, disk_limit, page_count, page_size, self.resource_monitor)
         self.tasks.append(task)
 
-        self.task_list.addItem(name)
+        self.update_task_table()  # Actualizar la tabla con la nueva tarea
+
         task.allocate_memory()  # Allocate memory for the task
 
         self.task_name_input.clear()
@@ -190,47 +208,38 @@ class TaskManagerApp(QMainWindow):
         self.page_size_input.clear()
 
     def close_task(self):
-        selected_item = self.task_list.currentItem()
-        if not selected_item:
+        selected_items = self.task_table.selectedItems()
+        if not selected_items:
             return
 
-        selected_task = selected_item.text()
-        for task in self.tasks:
-            if task.name == selected_task:
-                task.stop()
-                self.tasks.remove(task)
-                break
+        selected_row = selected_items[0].row()
+        task = self.tasks[selected_row]
+        task.stop()
+        self.tasks.pop(selected_row)
 
-        self.update_task_list()
-
-    def update_task_list(self):
-        self.task_list.clear()
-        for task in self.tasks:
-            self.task_list.addItem(task.name)
+        self.update_task_table()
 
     def show_task_info(self):
-        selected_item = self.task_list.currentItem()
-        if not selected_item:
+        selected_items = self.task_table.selectedItems()
+        if not selected_items:
             self.task_info_label.setText("")
             return
 
-        selected_task = selected_item.text()
-        for task in self.tasks:
-            if task.name == selected_task:
-                info = (
-                    f"Task: {task.name}\n"
-                    f"CPU Demand: {task.cpu_demand}%\n"
-                    f"RAM Demand (GB): {task.ram_demand:.2f}\n"
-                    f"Disk Demand (GB): {task.disk_demand:.2f}\n"
-                    f"CPU Limit: {task.cpu_limit}%\n"
-                    f"RAM Limit (GB): {task.ram_limit:.2f}\n"
-                    f"Disk Limit (GB): {task.disk_limit:.2f}\n"
-                    f"Page Count: {task.page_count}\n"
-                    f"Page Size (MB): {task.page_size}\n"
-                    f"Running: {'Yes' if task.is_running else 'No'}"
-                )
-                self.task_info_label.setText(info)
-                break
+        selected_row = selected_items[0].row()
+        task = self.tasks[selected_row]
+        info = (
+            f"Task: {task.name}\n"
+            f"CPU Demand: {task.cpu_demand}%\n"
+            f"RAM Demand (GB): {task.ram_demand:.2f}\n"
+            f"Disk Demand (GB): {task.disk_demand:.2f}\n"
+            f"CPU Limit: {task.cpu_limit}\n"
+            f"RAM Limit (GB): {task.ram_limit:.2f}\n"
+            f"Disk Limit (GB): {task.disk_limit:.2f}\n"
+            f"Page Count: {task.page_count}\n"
+            f"Page Size (MB): {task.page_size}\n"
+            f"Running: {'Running' if task.is_running else 'Stopped'}"
+        )
+        self.task_info_label.setText(info)
 
     def update_task_resources(self):
         for task in self.tasks:
@@ -240,7 +249,7 @@ class TaskManagerApp(QMainWindow):
                 disk_usage = random.uniform(0.5, task.disk_demand)
                 if not self.resource_monitor.allocate_resources(cpu_usage, ram_usage, disk_usage):
                     task.stop()
-        self.show_task_info()
+        self.update_task_table()
 
 
 if __name__ == "__main__":

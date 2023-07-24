@@ -1,6 +1,5 @@
 import sys
 import time
-import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLineEdit, QLabel, QComboBox, QTextEdit, QTabWidget
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer, QThread
 
@@ -106,6 +105,9 @@ class HypervisorConfig(QObject):
             storage_usage = 0.3  # Ejemplo: valor aleatorio de utilización de almacenamiento entre 0 y 1 (30%)
             self.vm_utilization[vm_name] = {'CPU': cpu_usage, 'Memory': memory_usage, 'Storage': storage_usage}
 
+    def configure_cpu_scheduling_algorithm(self, algorithm):
+        self.cpu_scheduling_algorithm = algorithm
+
 class SimulationThread(QThread):
     simulation_finished_signal = pyqtSignal()
 
@@ -133,6 +135,9 @@ class HypervisorGUI(QMainWindow):
         self.hypervisor.view_event_signal.connect(self.append_event_to_log)
         self.update_vm_info_timer = QTimer()
         self.update_vm_info_timer.timeout.connect(self.update_vm_info)
+
+        # Diccionario para almacenar las posiciones de las máquinas virtuales
+        self.vm_positions = {}
 
     def init_ui(self):
         self.setWindowTitle("Hypervisor Simulator")
@@ -263,6 +268,7 @@ class HypervisorGUI(QMainWindow):
 
             # Crear e iniciar el hilo de simulación
             self.simulation_thread = SimulationThread(self.hypervisor)
+            self._visualize_resource_utilization()
             self.simulation_thread.simulation_finished_signal.connect(self.on_simulation_finished)
             self.simulation_thread.start()
 
@@ -315,11 +321,11 @@ class HypervisorGUI(QMainWindow):
 
     def update_vm_info(self):
         vm_info = "Información de Máquinas Virtuales:\n"
-        for vm_name in self.hypervisor.vms:
-            cpu_usage = self.get_vm_resource_usage(vm_name, 'CPU')
-            memory_usage = self.get_vm_resource_usage(vm_name, 'Memory')
-            storage_usage = self.get_vm_resource_usage(vm_name, 'Storage')
-            status = "Activa" if self.is_vm_active(vm_name) else "Detenida"
+        for vm_name, vm_config in self.hypervisor.vms.items():
+            cpu_usage = self.hypervisor.vm_utilization.get(vm_name, {}).get('CPU', 0.0)
+            memory_usage = self.hypervisor.vm_utilization.get(vm_name, {}).get('Memory', 0.0)
+            storage_usage = self.hypervisor.vm_utilization.get(vm_name, {}).get('Storage', 0.0)
+            status = "Activa" if vm_name in self.hypervisor.get_all_vms() else "Detenida"
             vm_info += f"{vm_name} (Estado: {status}) - CPU: {cpu_usage:.1%}, Memoria: {memory_usage:.1%}, Almacenamiento: {storage_usage:.1%}\n"
         self.vm_info_text.setPlainText(vm_info)
 
@@ -340,6 +346,29 @@ class HypervisorGUI(QMainWindow):
 
     def append_event_to_log(self, event_text):
         self.event_log.append(event_text)
+
+    def _visualize_resource_utilization(self):
+        try:
+            self.hypervisor.configure_workload(self.workload_input.currentText())
+            self.hypervisor.start_simulation()
+            self.start_btn.setEnabled(False)
+            self.pause_btn.setEnabled(True)
+            self.stop_btn.setEnabled(True)
+            self.restart_btn.setEnabled(False)
+
+            # Almacenar las posiciones de las máquinas virtuales en self.vm_positions
+            for vm_name in self.hypervisor.vms:
+                self.vm_positions[vm_name] = self.generate_random_position()
+        except HypervisorError as e:
+            self.event_log.append(f"Error: {e}")
+
+    def generate_random_position(self):
+        # Implementar la lógica para generar posiciones aleatorias
+        # Puedes usar la librería random para generar coordenadas x e y aleatorias
+        import random
+        x = random.randint(0, 800)
+        y = random.randint(0, 600)
+        return x, y
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
