@@ -1,6 +1,5 @@
 import sys
 import time
-import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLineEdit, QLabel, QComboBox, QTextEdit, QTabWidget
 from PyQt5.QtCore import pyqtSignal, QObject, QTimer, QThread
 

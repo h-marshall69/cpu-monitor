@@ -1,8 +1,7 @@
 pyqt5
 PyQtChart
-psutil  
-pywifi
 comtypes
 py-cpuinfo
 wmi
-matplotlib
+psutil 
+pywifi 
